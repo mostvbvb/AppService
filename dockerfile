@@ -1,25 +1,20 @@
-#get the latest alpine image from node registry
-FROM node:alpine AS build-stage
+# pull official base image
+FROM node:13.12.0-alpine
 
-#set the working directory
+# set working directory
 WORKDIR /app
 
-#copy the package and package lock files
-#from local to container work directory /app
-COPY package*.json /app/
+# add `/app/node_modules/.bin` to $PATH
+ENV PATH /app/node_modules/.bin:$PATH
 
-#Run command npm install to install packages
-RUN npm install
+# install app dependencies
+COPY package.json ./
+COPY package-lock.json ./
+RUN npm install --silent
+RUN npm install react-scripts@3.4.1 -g --silent
 
-#copy all the folder contents from local to container
-COPY . .
+# add app
+COPY . ./
 
-#create a react production build
-RUN npm run build
-
-#get the latest alpine image from nginx registry
-FROM nginx:alpine
-
-#we copy the output from first stage that is our react build
-#into nginx html directory where it will serve our index file
-COPY --from=build-stage /app/build/ /usr/share/nginx/html
+# start app
+CMD ["npm", "start"]
